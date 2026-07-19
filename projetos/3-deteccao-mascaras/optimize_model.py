@@ -29,24 +29,24 @@ def main():
     model = YOLO(model_path)
 
     print("Exportando para TFLite...")
-    model.export(format="tflite", imgsz=640)
+    model.export(format="tflite", imgsz=640, int8=True)
 
-    # o export gera vários arquivos .tflite (float16 e float32), então
-    # precisa procurar especificamente o float16
-    float16_model = None
+    # o export gera vários arquivos (Float16, Float32, Int8)
+    # então precisa procurar especificamente o int8
+    int8_model = None
     for root, _, files in os.walk(project_dir):
         for f in files:
-            if f.endswith(".tflite") and "float16" in f.lower():
-                float16_model = os.path.join(root, f)
+            if f.endswith(".tflite") and "int8" in f.lower():
+                int8_model = os.path.join(root, f)
                 break
-        if float16_model:
+        if int8_model:
             break
 
-    if float16_model is None:
-        raise FileNotFoundError(".tflite float16 gerado pelo export não localizado.")
+    if int8_model is None:
+        raise FileNotFoundError(".tflite int8 gerado pelo export não localizado.")
 
     output_model = os.path.join(project_dir, "model.tflite")
-    shutil.copy(float16_model, output_model)
+    shutil.copy(int8_model, output_model)
 
     print(f"Exportação concluída. Modelo salvo em: {output_model}")
 

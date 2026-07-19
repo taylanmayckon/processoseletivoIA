@@ -189,9 +189,9 @@ As bibliotecas os e shutil, empregadas na manipulação de arquivos e diretório
 <!-- Explique o processo de exportação para TFLite realizado em `optimize_model.py`. -->
 O modelo treinado (model.pt) foi convertido para o formato TensorFlow Lite pelo script optimize_model.py, por meio da função model.export(format="tflite") da biblioteca Ultralytics.
 
-Nas versões recentes da Ultralytics, o processo de exportação passou a gerar uma pasta intermediária (model_saved_model) contendo múltiplos artefatos da conversão, entre eles as versões Float32 e Float16 do modelo TensorFlow Lite, além de arquivos auxiliares como o modelo ONNX e dados de calibração. Para adequar essa saída ao formato esperado pelo desafio, o script localiza automaticamente o arquivo model_float16.tflite, copia-o para a raiz do projeto e o renomeia para model.tflite.
+Foram avaliadas duas estratégias de quantização: Float16, que reduz a precisão dos pesos de 32 para 16 bits mantendo a representação em ponto flutuante, e Int8, que converte pesos e operações para uma representação inteira de 8 bits. A segunda costuma permitir reduções de tamanho maiores e é bastante empregada em aplicações de Edge AI com restrição de memória e armazenamento.
 
-A escolha pela versão Float16 justifica-se pela redução no tamanho do arquivo e no consumo de memória em relação à versão Float32, sem perda perceptível de desempenho na inferência, estratégia comum em aplicações de Edge AI, nas quais os recursos computacionais são limitados.
+Nas versões recentes da Ultralytics, o processo de exportação passou a gerar uma pasta intermediária (model_saved_model) contendo múltiplos artefatos da conversão, entre eles as versões Float32, Float16 e Int8 do modelo TensorFlow Lite, além de arquivos auxiliares como o modelo ONNX e dados de calibração. O script localiza automaticamente o arquivo model_int8.tflite, copia-o para a raiz do projeto e o renomeia para model.tflite, essa versão foi a escolhida como entrega final, pelas razões apresentadas na seção seguinte.
 
 ### 4️⃣ Resultados Obtidos
 
@@ -222,9 +222,10 @@ Os tamanhos dos modelos gerados foram:
 | Arquivo | Tamanho |
 |----------|----------|
 | model.pt | 5,20 MB |
-| model.tflite | 5,11 MB |
+| model.tflite (Float16) | 5,11 MB |
+| model.tflite (Int8) | 2,84 MB |
 
-A conversão para TensorFlow Lite resultou em uma redução discreta de tamanho, sem impacto perceptível sobre o desempenho do modelo.
+Além da validação do modelo original, testou-se a inferência com as duas versões exportadas do TensorFlow Lite. Nas cinco imagens usadas como amostra, ambas produziram exatamente as mesmas detecções, incluindo a identificação de uma ocorrência da classe minoritária mask_weared_incorrect. Como a versão Int8 (2,84 MB) não apresentou diferença observável em relação à Float16 (5,11 MB) nesse teste, optou-se por ela como modelo final entregue.
 
 
 ### 5️⃣ Comentários Adicionais (Opcional)
@@ -232,11 +233,11 @@ A conversão para TensorFlow Lite resultou em uma redução discreta de tamanho,
 <!-- Dificuldades encontradas, decisões técnicas importantes, limitações do modelo
 (ex: desempenho na classe minoritária), aprendizados durante o desafio. -->
 
-A principal limitação observada ao longo do desenvolvimento decorre do desbalanceamento do conjunto de dados: a classe with_mask responde por cerca de 79% dos objetos anotados, contra apenas 3% de mask_weared_incorrect. Esse desequilíbrio se refletiu diretamente nas métricas por classe, mas ainda assim o modelo foi capaz de aprender padrões distintos para as três categorias, o que sugere que o pipeline de fine-tuning funcionou de maneira consistente mesmo diante de dados escassos para a classe minoritária.
+A principal limitação observada ao longo do desenvolvimento decorre do desbalanceamento do conjunto de dados: a classe with_mask responde por cerca de 79% dos objetos anotados, contra apenas 3% de mask_weared_incorrect. Esse desequilíbrio afetou sobretudo o recall da classe minoritária, mas ainda assim o modelo foi capaz de aprender padrões distintos para as três categorias, considerando a quantidade reduzida de exemplos disponíveis para ela.
 
-Um segundo ponto relevante foi a exportação para TensorFlow Lite. Alterações recentes na biblioteca Ultralytics passaram a gerar múltiplos artefatos intermediários durante a conversão, em vez de produzir diretamente um único arquivo .tflite. Isso exigiu a implementação de uma etapa adicional em optimize_model.py para localizar e selecionar automaticamente a versão Float16 entre os artefatos gerados.
+A exportação para TensorFlow Lite teve uma pequena diferença em relação ao que foi sugerido na documentação do processo seletivo. Versões recentes da Ultralytics passaram a gerar múltiplos artefatos intermediários durante a conversão, em vez de produzir diretamente um único arquivo .tflite, o que tornou necessária uma etapa extra em optimize_model.py para localizar e selecionar automaticamente a versão desejada entre os artefatos gerados. Testar Float16 e Int8 lado a lado acabou sendo útil justamente por isso, foi possível comparar tamanho e comportamento das duas antes de decidir qual deveria ser escolhida.
 
-De maneira geral, o projeto permitiu percorrer as etapas centrais de um pipeline de detecção de objetos voltado a Edge AI, da análise do conjunto de dados ao fine-tuning, exportação e validação do modelo em formato otimizado.
+De maneira geral, o projeto permitiu percorrer as etapas centrais de um pipeline de detecção de objetos voltado a Edge AI, desde a análise do conjunto de dados ao fine-tuning, exportação, otimização e validação do modelo final.
 
 
 
