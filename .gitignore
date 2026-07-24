@@ -14,3 +14,8 @@ __pycache__/
 
 # Scripts auxiliares
 projetos/3-deteccao-mascaras/tools/
+
+# Artefatos gerados na otimização
+projetos/3-deteccao-mascaras/model_saved_model/
+projetos/3-deteccao-mascaras/model.onnx
+projetos/3-deteccao-mascaras/calibration_image_sample_data_20x128x128x3_float32.npy
